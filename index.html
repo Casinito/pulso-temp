@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pulso & Temp">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0e0e0e">
+  <title>Pulso & Temperatura</title>
+
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --panel: #161616;
+      --panel2: #202020;
+      --panel3: #2a2a2a;
+      --text: #e8e4dc;
+      --muted: #9a9488;
+      --dim: #5e5a52;
+      --accent: #d4a843;
+      --accent2: #b8922e;
+      --border: #303030;
+      --danger: #9e2b2b;
+      --ok: #2e6b4a;
+      --navh: 64px;
+    }
+
+    body.red {
+      --bg: #100000;
+      --panel: #170000;
+      --panel2: #230000;
+      --panel3: #310000;
+      --text: #d65353;
+      --muted: #944141;
+      --dim: #632020;
+      --accent: #ff3333;
+      --accent2: #c92525;
+      --border: #3b0000;
+      --danger: #650000;
+      --ok: #663300;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) 14px calc(var(--navh) + env(safe-area-inset-bottom) + 14px);
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+    .screen { display: none; max-width: 720px; margin: 0 auto; }
+    .screen.on { display: block; }
+
+    .title {
+      padding: 18px 0 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .title strong {
+      display: block;
+      color: var(--accent);
+      font-size: 24px;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-bottom: 3px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .card h2 {
+      color: var(--accent);
+      font-size: 17px;
+      margin-bottom: 12px;
+    }
+
+    .field { margin-bottom: 13px; }
+    .lbl {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    textarea { min-height: 74px; resize: vertical; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    .pills {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: var(--panel2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 14px;
+      user-select: none;
+    }
+    .pill.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 700;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 12px 14px;
+      font-weight: 650;
+    }
+    .btn-main {
+      width: 100%;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      padding: 15px;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-top: 4px;
+    }
+    .btn-danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; min-width: 120px; }
+
+    nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: calc(var(--navh) + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 50;
+    }
+    nav button {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      color: var(--dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 11px;
+    }
+    nav button span { font-size: 21px; line-height: 1; }
+    nav button.on { color: var(--accent); }
+
+    .entry {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 10px;
+    }
+    .entry-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .date { color: var(--muted); font-size: 12px; }
+    .moment { color: var(--accent); font-size: 13px; margin-top: 2px; }
+    .x {
+      background: transparent;
+      border: 0;
+      color: var(--dim);
+      font-size: 20px;
+      padding: 0 3px;
+    }
+    .vals {
+      display: flex;
+      gap: 18px;
+      margin: 10px 0;
+    }
+    .val {
+      color: var(--accent);
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .val small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 3px;
+    }
+    .tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .tag {
+      background: var(--panel2);
+      border-radius: 4px;
+      padding: 4px 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .note {
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 9px;
+      padding-top: 8px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 38px 10px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .stat:last-child { border-bottom: 0; }
+    .stat span:first-child { color: var(--muted); }
+    .stat span:last-child {
+      color: var(--accent);
+      font-weight: 750;
+      text-align: right;
+    }
+    .pattern {
+      background: var(--panel2);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    #toast {
+      position: fixed;
+      top: calc(env(safe-area-inset-top) + 14px);
+      left: 50%;
+      transform: translate(-50%, -8px);
+      opacity: 0;
+      pointer-events: none;
+      background: var(--ok);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 9px;
+      z-index: 100;
+      transition: .2s;
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    #toast.err { background: var(--danger); }
+
+    .toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .track {
+      position: absolute;
+      inset: 0;
+      background: var(--panel3);
+      border-radius: 999px;
+    }
+    .track:before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      top: 3px; left: 3px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: .18s;
+    }
+    .switch input:checked + .track { background: var(--accent); }
+    .switch input:checked + .track:before {
+      transform: translateX(20px);
+      background: #111;
+    }
+
+    @media (max-width: 390px) {
+      body { padding-left: 10px; padding-right: 10px; }
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+      .title strong { font-size: 22px; }
+    }
+  </style>
+</head>
+
+<body>
+<div id="toast"></div>
+
+<section id="s-add" class="screen on">
+  <div class="title"><strong>Pulso & Temperatura</strong>Añadir registro</div>
+
+  <div class="card">
+    <h2>Registro rápido</h2>
+    <div class="grid2">
+      <div class="field">
+        <label class="lbl">Pulso</label>
+        <input id="q-pulse" inputmode="numeric" type="number" min="30" max="220" placeholder="80">
+      </div>
+      <div class="field">
+        <label class="lbl">Temperatura</label>
+        <input id="q-temp" inputmode="decimal" type="text" placeholder="36,6">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Momento</label>
+      <select id="q-moment">
+        <option value="">Sin indicar</option>
+        <option>Al despertar</option>
+        <option>Antes de comer</option>
+        <option>Después de comer</option>
+        <option>Antes de dormir</option>
+        <option>Después de pasear</option>
+        <option>Después de trabajar</option>
+        <option>Otro</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Sensación</label>
+      <select id="q-feeling">
+        <option value="">Sin indicar</option>
+        <option>Bien</option>
+        <option>Frío</option>
+        <option>Caliente</option>
+        <option>Somnoliento</option>
+        <option>Nervioso</option>
+        <option>Reventado</option>
+        <option>Hambre</option>
+        <option>Calmado</option>
+        <option>Otro</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Notas rápidas</label>
+      <input id="q-notes" type="text" placeholder="Ej.: paseo, café, magnesio...">
+    </div>
+
+    <button class="btn btn-main" onclick="saveQuick()">Guardar rápido</button>
+  </div>
+
+  <div class="card">
+    <h2>Registro completo</h2>
+
+    <div class="field">
+      <label class="lbl">Fecha y hora</label>
+      <input type="datetime-local" id="f-dt">
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label class="lbl">Pulso</label>
+        <input type="number" id="f-pulse" placeholder="80" min="30" max="220" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label class="lbl">Temperatura</label>
+        <input type="text" id="f-temp" placeholder="36,6" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Zona de medición</label>
+      <select id="f-zone">
+        <option value="axila">Axila</option>
+        <option value="oral">Oral</option>
+        <option value="rectal">Rectal</option>
+        <option value="frente">Frente</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Momento del día</label>
+      <div class="pills" id="pg-moment" data-mode="single">
+        <div class="pill" data-v="Al despertar">Al despertar</div>
+        <div class="pill" data-v="Antes de comer">Antes de comer</div>
+        <div class="pill" data-v="Después de comer">Después de comer</div>
+        <div class="pill" data-v="Antes de dormir">Antes de dormir</div>
+        <div class="pill" data-v="Después de pasear">Después de pasear</div>
+        <div class="pill" data-v="Después de trabajar">Después de trabajar</div>
+        <div class="pill" data-v="Otro">Otro</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Sueño</label>
+      <div class="grid2">
+        <input type="text" id="f-sleep-h" placeholder="Horas, ej. 7,5" inputmode="decimal">
+        <select id="f-sleep-q">
+          <option value="">Calidad...</option>
+          <option value="mala">Mala</option>
+          <option value="regular">Regular</option>
+          <option value="buena">Buena</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Comida previa</label>
+      <input type="text" id="f-food" placeholder="Leche, café, azúcar, arroz...">
+    </div>
+
+    <div class="field">
+      <label class="lbl">Carbohidratos recientes</label>
+      <div class="pills" id="pg-carbs" data-mode="single">
+        <div class="pill" data-v="bajos">Bajos</div>
+        <div class="pill" data-v="medios">Medios</div>
+        <div class="pill" data-v="altos">Altos</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Sal reciente</label>
+      <div class="pills" id="pg-salt" data-mode="single">
+        <div class="pill" data-v="poca">Poca</div>
+        <div class="pill" data-v="normal">Normal</div>
+        <div class="pill" data-v="alta">Alta</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Suplementos</label>
+      <div class="pills" id="pg-supps" data-mode="multi">
+        <div class="pill" data-v="T3">T3</div>
+        <div class="pill" data-v="D3">D3</div>
+        <div class="pill" data-v="K2">K2</div>
+        <div class="pill" data-v="B1">B1</div>
+        <div class="pill" data-v="B3">B3</div>
+        <div class="pill" data-v="Magnesio">Magnesio</div>
+        <div class="pill" data-v="Aspirina">Aspirina</div>
+        <div class="pill" data-v="Otros">Otros</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Sensación corporal</label>
+      <div class="pills" id="pg-feeling" data-mode="single">
+        <div class="pill" data-v="Bien">Bien</div>
+        <div class="pill" data-v="Frío">Frío</div>
+        <div class="pill" data-v="Caliente">Caliente</div>
+        <div class="pill" data-v="Somnoliento">Somnoliento</div>
+        <div class="pill" data-v="Nervioso">Nervioso</div>
+        <div class="pill" data-v="Reventado">Reventado</div>
+        <div class="pill" data-v="Hambre">Hambre</div>
+        <div class="pill" data-v="Calmado">Calmado</div>
+        <div class="pill" data-v="Otro">Otro</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Notas</label>
+      <textarea id="f-notes" placeholder="Observaciones libres..."></textarea>
+    </div>
+
+    <button class="btn btn-main" onclick="saveFull()">Guardar completo</button>
+  </div>
+</section>
+
+<section id="s-history" class="screen">
+  <div class="title"><strong>Historial</strong>Registros guardados</div>
+
+  <div class="card">
+    <div class="grid3">
+      <select id="fl-moment" onchange="renderHistory()">
+        <option value="">Momento</option>
+        <option>Al despertar</option>
+        <option>Antes de comer</option>
+        <option>Después de comer</option>
+        <option>Antes de dormir</option>
+        <option>Después de pasear</option>
+        <option>Después de trabajar</option>
+        <option>Otro</option>
+      </select>
+      <select id="fl-feeling" onchange="renderHistory()">
+        <option value="">Sensación</option>
+        <option>Bien</option>
+        <option>Frío</option>
+        <option>Caliente</option>
+        <option>Somnoliento</option>
+        <option>Nervioso</option>
+        <option>Reventado</option>
+        <option>Hambre</option>
+        <option>Calmado</option>
+        <option>Otro</option>
+      </select>
+      <select id="fl-supp" onchange="renderHistory()">
+        <option value="">Suplemento</option>
+        <option>T3</option>
+        <option>D3</option>
+        <option>K2</option>
+        <option>B1</option>
+        <option>B3</option>
+        <option>Magnesio</option>
+        <option>Aspirina</option>
+        <option>Otros</option>
+      </select>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn" onclick="clearFilters()">Limpiar filtros</button>
+      <button class="btn btn-danger" onclick="deleteAll()">Borrar todo</button>
+    </div>
+  </div>
+
+  <div id="entry-count" class="muted" style="margin: 4px 0 10px"></div>
+  <div id="history-list"></div>
+</section>
+
+<section id="s-summary" class="screen">
+  <div class="title"><strong>Resumen</strong>Promedios y patrones</div>
+  <div id="summary-content"></div>
+</section>
+
+<section id="s-settings" class="screen">
+  <div class="title"><strong>Ajustes</strong>Datos y pantalla</div>
+
+  <div class="card toggle">
+    <div>
+      <h2 style="margin-bottom:3px">Modo rojo nocturno</h2>
+      <div class="muted">Más cómodo de noche.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="s-red" onchange="toggleRed()">
+      <span class="track"></span>
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>Preferencias</h2>
+    <div class="field">
+      <label class="lbl">Zona por defecto</label>
+      <select id="s-zone" onchange="savePrefs()">
+        <option value="axila">Axila</option>
+        <option value="oral">Oral</option>
+        <option value="rectal">Rectal</option>
+        <option value="frente">Frente</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Datos</h2>
+    <p class="muted" style="margin-bottom:10px">Los datos se guardan solo en este navegador y en este dispositivo. Exporta copia de seguridad de vez en cuando.</p>
+    <div class="btn-row">
+      <button class="btn" onclick="exportData()">Exportar JSON</button>
+      <button class="btn" onclick="document.getElementById('imp-file').click()">Importar JSON</button>
+      <button class="btn btn-danger" onclick="deleteAll()">Borrar todo</button>
+    </div>
+    <input type="file" id="imp-file" accept=".json,application/json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <div class="empty" style="padding:20px 5px">
+    Pulso & Temperatura · v1.1<br>
+    HTML único · sin servidor · sin internet después de cargar
+  </div>
+</section>
+
+<nav>
+  <button id="n-add" class="on" onclick="show('add')"><span>＋</span>Añadir</button>
+  <button id="n-history" onclick="show('history')"><span>≡</span>Historial</button>
+  <button id="n-summary" onclick="show('summary')"><span>◈</span>Resumen</button>
+  <button id="n-settings" onclick="show('settings')"><span>◎</span>Ajustes</button>
+</nav>
+
+<script>
+let entries = [];
+let prefs = { redMode: false, defaultZone: "axila" };
+let toastTimer = null;
+
+function $(id) { return document.getElementById(id); }
+
+function parseNum(value) {
+  if (value === null || value === undefined) return null;
+  const s = String(value).trim().replace(",", ".");
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function nowLocal() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatDate(dt) {
+  if (!dt) return "—";
+  const d = new Date(dt);
+  if (Number.isNaN(d.getTime())) return escapeHTML(dt);
+  const pad = n => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function load() {
+  try { entries = JSON.parse(localStorage.getItem("pt_entries") || "[]"); } catch { entries = []; }
+  try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem("pt_prefs") || "{}")); } catch {}
+  $("f-dt").value = nowLocal();
+  $("f-zone").value = prefs.defaultZone;
+  $("s-zone").value = prefs.defaultZone;
+  $("s-red").checked = prefs.redMode;
+  document.body.classList.toggle("red", prefs.redMode);
+  setupPills();
+}
+
+function persist() {
+  localStorage.setItem("pt_entries", JSON.stringify(entries));
+}
+
+function savePrefs() {
+  prefs.defaultZone = $("s-zone").value;
+  $("f-zone").value = prefs.defaultZone;
+  localStorage.setItem("pt_prefs", JSON.stringify(prefs));
+  toast("Preferencias guardadas");
+}
+
+function toggleRed() {
+  prefs.redMode = $("s-red").checked;
+  document.body.classList.toggle("red", prefs.redMode);
+  localStorage.setItem("pt_prefs", JSON.stringify(prefs));
+}
+
+function setupPills() {
+  document.querySelectorAll(".pills").forEach(group => {
+    group.addEventListener("click", ev => {
+      const pill = ev.target.closest(".pill");
+      if (!pill) return;
+      if (group.dataset.mode === "multi") {
+        pill.classList.toggle("on");
+      } else {
+        const was = pill.classList.contains("on");
+        group.querySelectorAll(".pill").forEach(p => p.classList.remove("on"));
+        if (!was) pill.classList.add("on");
+      }
+    });
+  });
+}
+
+function pillVal(id) {
+  const el = document.querySelector(`#${id} .pill.on`);
+  return el ? el.dataset.v : "";
+}
+
+function pillVals(id) {
+  return [...document.querySelectorAll(`#${id} .pill.on`)].map(p => p.dataset.v);
+}
+
+function clearPills() {
+  document.querySelectorAll("#s-add .pill").forEach(p => p.classList.remove("on"));
+}
+
+function show(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("on"));
+  $("s-" + name).classList.add("on");
+  $("n-" + name).classList.add("on");
+  if (name === "history") renderHistory();
+  if (name === "summary") renderSummary();
+}
+
+function saveQuick() {
+  const pulse = parseNum($("q-pulse").value);
+  const temp = parseNum($("q-temp").value);
+
+  if (pulse === null && temp === null) {
+    toast("Añade pulso o temperatura", true);
+    return;
+  }
+  if (pulse !== null && (pulse < 30 || pulse > 220)) {
+    toast("Pulso fuera de rango", true);
+    return;
+  }
+  if (temp !== null && (temp < 34 || temp > 42)) {
+    toast("Temperatura fuera de rango", true);
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    dt: nowLocal(),
+    pulse,
+    temp,
+    zone: prefs.defaultZone,
+    moment: $("q-moment").value,
+    sleepH: null,
+    sleepQ: "",
+    food: "",
+    carbs: "",
+    salt: "",
+    supps: [],
+    feeling: $("q-feeling").value,
+    notes: $("q-notes").value.trim()
+  };
+
+  entries.unshift(entry);
+  persist();
+  $("q-pulse").value = "";
+  $("q-temp").value = "";
+  $("q-moment").value = "";
+  $("q-feeling").value = "";
+  $("q-notes").value = "";
+  toast("Registro guardado");
+}
+
+function saveFull() {
+  const pulse = parseNum($("f-pulse").value);
+  const temp = parseNum($("f-temp").value);
+  const sleepH = parseNum($("f-sleep-h").value);
+
+  if (pulse === null && temp === null) {
+    toast("Añade pulso o temperatura", true);
+    return;
+  }
+  if (pulse !== null && (pulse < 30 || pulse > 220)) {
+    toast("Pulso fuera de rango", true);
+    return;
+  }
+  if (temp !== null && (temp < 34 || temp > 42)) {
+    toast("Temperatura fuera de rango", true);
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    dt: $("f-dt").value || nowLocal(),
+    pulse,
+    temp,
+    zone: $("f-zone").value,
+    moment: pillVal("pg-moment"),
+    sleepH,
+    sleepQ: $("f-sleep-q").value,
+    food: $("f-food").value.trim(),
+    carbs: pillVal("pg-carbs"),
+    salt: pillVal("pg-salt"),
+    supps: pillVals("pg-supps"),
+    feeling: pillVal("pg-feeling"),
+    notes: $("f-notes").value.trim()
+  };
+
+  entries.unshift(entry);
+  persist();
+  resetFull();
+  toast("Registro guardado");
+}
+
+function resetFull() {
+  $("f-dt").value = nowLocal();
+  $("f-pulse").value = "";
+  $("f-temp").value = "";
+  $("f-zone").value = prefs.defaultZone;
+  $("f-sleep-h").value = "";
+  $("f-sleep-q").value = "";
+  $("f-food").value = "";
+  $("f-notes").value = "";
+  clearPills();
+}
+
+function clearFilters() {
+  $("fl-moment").value = "";
+  $("fl-feeling").value = "";
+  $("fl-supp").value = "";
+  renderHistory();
+}
+
+function filteredEntries() {
+  const m = $("fl-moment").value;
+  const f = $("fl-feeling").value;
+  const s = $("fl-supp").value;
+
+  return entries.filter(e => {
+    if (m && e.moment !== m) return false;
+    if (f && e.feeling !== f) return false;
+    if (s && !(e.supps || []).includes(s)) return false;
+    return true;
+  });
+}
+
+function renderHistory() {
+  const data = filteredEntries();
+  $("entry-count").textContent = `${data.length} registro${data.length === 1 ? "" : "s"}`;
+  const list = $("history-list");
+
+  if (!data.length) {
+    list.innerHTML = `<div class="empty">Sin registros</div>`;
+    return;
+  }
+
+  list.innerHTML = data.map(e => {
+    const tags = [];
+    if (e.carbs) tags.push("Carbs: " + e.carbs);
+    if (e.salt) tags.push("Sal: " + e.salt);
+    if (e.sleepH) tags.push("Sueño: " + e.sleepH + "h" + (e.sleepQ ? " (" + e.sleepQ + ")" : ""));
+    if (e.feeling) tags.push(e.feeling);
+    (e.supps || []).forEach(x => tags.push(x));
+
+    return `
+      <div class="entry">
+        <div class="entry-top">
+          <div>
+            <div class="date">${formatDate(e.dt)} · ${escapeHTML(e.zone || "axila")}</div>
+            ${e.moment ? `<div class="moment">${escapeHTML(e.moment)}</div>` : ""}
+          </div>
+          <button class="x" onclick="deleteEntry(${Number(e.id)})">×</button>
+        </div>
+        <div class="vals">
+          ${e.pulse !== null && e.pulse !== undefined ? `<div class="val">${escapeHTML(e.pulse)}<small>bpm</small></div>` : ""}
+          ${e.temp !== null && e.temp !== undefined ? `<div class="val">${Number(e.temp).toFixed(1).replace(".", ",")}<small>°C</small></div>` : ""}
+        </div>
+        ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${escapeHTML(t)}</span>`).join("")}</div>` : ""}
+        ${e.food ? `<div class="note">Comida: ${escapeHTML(e.food)}</div>` : ""}
+        ${e.notes ? `<div class="note">${escapeHTML(e.notes)}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function deleteEntry(id) {
+  if (!confirm("¿Borrar este registro?")) return;
+  entries = entries.filter(e => Number(e.id) !== Number(id));
+  persist();
+  renderHistory();
+  toast("Registro borrado");
+}
+
+function deleteAll() {
+  if (!entries.length) {
+    toast("No hay registros");
+    return;
+  }
+  if (!confirm("¿Borrar todos los registros? No se puede deshacer.")) return;
+  entries = [];
+  persist();
+  renderHistory();
+  renderSummary();
+  toast("Datos borrados");
+}
+
+function avg(values) {
+  const nums = values.filter(v => typeof v === "number" && Number.isFinite(v));
+  if (!nums.length) return null;
+  return nums.reduce((a,b) => a+b, 0) / nums.length;
+}
+
+function fmtTemp(n) {
+  return n === null ? "—" : n.toFixed(1).replace(".", ",") + " °C";
+}
+
+function fmtPulse(n) {
+  return n === null ? "—" : Math.round(n) + " bpm";
+}
+
+function renderSummary() {
+  const el = $("summary-content");
+
+  if (entries.length < 2) {
+    el.innerHTML = `<div class="empty">Añade al menos 2 registros para ver resumen.</div>`;
+    return;
+  }
+
+  const avgP = avg(entries.map(e => e.pulse));
+  const avgT = avg(entries.map(e => e.temp));
+  const tempEntries = entries.filter(e => typeof e.temp === "number" && Number.isFinite(e.temp));
+  const highT = tempEntries.length ? [...tempEntries].sort((a,b) => b.temp - a.temp)[0] : null;
+  const lowT = tempEntries.length ? [...tempEntries].sort((a,b) => a.temp - b.temp)[0] : null;
+
+  const moments = ["Al despertar", "Antes de comer", "Después de comer", "Antes de dormir", "Después de pasear", "Después de trabajar"];
+  const momentRows = moments.map(m => {
+    const es = entries.filter(e => e.moment === m);
+    if (!es.length) return "";
+    return `<div class="stat"><span>${escapeHTML(m)} (${es.length})</span><span>${fmtPulse(avg(es.map(e => e.pulse)))} / ${fmtTemp(avg(es.map(e => e.temp)))}</span></div>`;
+  }).join("");
+
+  const patterns = buildPatterns();
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>General</h2>
+      <div class="stat"><span>Registros</span><span>${entries.length}</span></div>
+      <div class="stat"><span>Pulso medio</span><span>${fmtPulse(avgP)}</span></div>
+      <div class="stat"><span>Temperatura media</span><span>${fmtTemp(avgT)}</span></div>
+      ${highT ? `<div class="stat"><span>Temperatura más alta</span><span>${fmtTemp(highT.temp)}</span></div>` : ""}
+      ${lowT ? `<div class="stat"><span>Temperatura más baja</span><span>${fmtTemp(lowT.temp)}</span></div>` : ""}
+    </div>
+
+    ${momentRows ? `<div class="card"><h2>Por momento</h2>${momentRows}</div>` : ""}
+
+    <div class="card">
+      <h2>Lectura orientativa</h2>
+      <p class="muted" style="margin-bottom:10px">No es diagnóstico. Solo cruza tus propios datos para ver coincidencias.</p>
+      ${patterns.length ? patterns.map(p => `<div class="pattern">${escapeHTML(p)}</div>`).join("") : `<div class="empty">Aún no hay patrones claros.</div>`}
+    </div>
+  `;
+}
+
+function buildPatterns() {
+  const out = [];
+  const last = entries[0];
+
+  if (last && typeof last.pulse === "number" && typeof last.temp === "number") {
+    if (last.pulse < 70 && last.temp < 36.4) out.push("Último registro: pulso bajo + temperatura baja podría coincidir con baja producción energética ese día.");
+    if (last.pulse > 90 && last.temp < 36.5) out.push("Último registro: pulso alto + temperatura baja podría coincidir con estrés/adrenalina.");
+    if (last.pulse >= 75 && last.pulse <= 90 && last.temp >= 36.6 && last.temp <= 37.0 && last.feeling === "Bien") out.push("Último registro: pulso 75-90, temperatura axilar buena y sensación buena. Parece un registro favorable.");
+    if (last.temp >= 36.6 && last.feeling === "Somnoliento") out.push("Último registro: temperatura buena pero somnolencia. Conviene mirar sueño, magnesio, B3, comida previa o exceso de suplemento.");
+    if (last.pulse > 90 && last.feeling === "Nervioso") out.push("Último registro: pulso alto + nerviosismo podría coincidir con exceso de estímulo, T3, café, estrés o falta de comida.");
+    if (last.temp < 36.4 && ["Frío", "Reventado"].includes(last.feeling)) out.push("Último registro: temperatura baja + frío/reventado podría coincidir con falta de carbohidratos, sal o descanso.");
+  }
+
+  ["Magnesio", "B3", "T3", "Aspirina"].forEach(s => {
+    const withS = entries.filter(e => (e.supps || []).includes(s) && e.feeling);
+    if (withS.length >= 2) {
+      const counts = {};
+      withS.forEach(e => counts[e.feeling] = (counts[e.feeling] || 0) + 1);
+      const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+      if (top && top[1] >= 2) out.push(`Con ${s}, la sensación que más se repite es “${top[0]}” (${top[1]} de ${withS.length} registros).`);
+    }
+  });
+
+  ["bajos", "medios", "altos"].forEach(c => {
+    const es = entries.filter(e => e.carbs === c && typeof e.temp === "number");
+    if (es.length >= 2) out.push(`Con carbohidratos ${c}, la temperatura media registrada es ${fmtTemp(avg(es.map(e => e.temp)))}.`);
+  });
+
+  ["poca", "normal", "alta"].forEach(s => {
+    const es = entries.filter(e => e.salt === s && e.feeling);
+    if (es.length >= 2) {
+      const bad = es.filter(e => ["Frío", "Reventado", "Somnoliento"].includes(e.feeling)).length;
+      if (bad >= 2) out.push(`Con sal ${s}, frío/reventado/somnoliento aparece ${bad} veces de ${es.length}.`);
+    }
+  });
+
+  if (!out.length && entries.length >= 5) out.push("Hay registros suficientes para empezar, pero aún no aparece una coincidencia fuerte. Sigue midiendo en momentos fijos.");
+
+  return out.slice(0, 10);
+}
+
+function exportData() {
+  const data = { entries, prefs, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "pulso-temperatura-" + new Date().toISOString().slice(0,10) + ".json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  toast("Datos exportados");
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.entries)) throw new Error("Formato no válido");
+      const ids = new Set(entries.map(x => Number(x.id)));
+      const incoming = data.entries.filter(x => !ids.has(Number(x.id)));
+      if (!confirm(`Importar ${incoming.length} registros nuevos?`)) return;
+      entries = [...entries, ...incoming].sort((a,b) => Number(b.id) - Number(a.id));
+      persist();
+      toast("Datos importados");
+    } catch {
+      toast("Archivo no válido", true);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = "";
+}
+
+function toast(msg, err=false) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.className = err ? "err" : "";
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+load();
+</script>
+</body>
+</html>
